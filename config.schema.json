@@ -1,16 +1,147 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "TwilineHomebridgePlugin",
   "pluginType": "platform",
   "singular": true,
+  "headerDisplay": "This plugin is provided  by [AndreasOttiger](https://github.com/AndreasOttiger/)",
+  "footerDisplay": ".",
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
+      "twiline_ip": {
+        "title": "TWILINE IP",
         "type": "string",
         "required": true,
-        "default": "Example Dynamic Platform"
+        "format": "ipv4"
+      },
+      "twiline_port": {
+        "title": "TWILINE Port",
+        "type": "integer",
+        "maximum": 65535,
+        "required": true,
+        "default": "3344"
+      },
+      "lightSwitches": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+              "reference": {
+                  "title": "Reference",
+                  "type": "string",
+                  "required": true
+              },
+              "name": {
+                  "title": "Name",
+                  "type": "string"
+              }
+          }
+        }
+      },
+      "scenes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+              "reference": {
+                  "title": "Reference",
+                  "type": "string",
+                  "required": true
+              },
+              "name": {
+                  "title": "Name",
+                  "type": "string"
+              }
+          }
+        }
       }
     }
-  }
+  },
+  "layout": [
+    {
+      "type": "flex",
+      "flex-flow": "row wrap",
+      "items": [
+        {
+          "type": "flex",
+          "flex-flow": "column",
+          "items": ["twiline_ip"]
+        },
+        {
+          "type": "flex",
+          "flex-flow": "column",
+          "items": ["twiline_port"]
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Light switches",
+      "expandable": true,
+      "expanded": true,
+      "items": [
+        {
+          "type": "help",
+          "helpvalue": "Enter the references from the configuration tool for your light switches."
+        },
+        {
+          "nodescription": true,
+          "notitle": true,
+          "key": "lightSwitches",
+          "title": "Light Switch",
+          "type": "array",
+          "listItems": 1,
+          "items": [
+            {
+              "type": "div",
+              "displayFlex": true,
+              "flex-direction": "row",
+              "items": [
+                { "key": "lightSwitches[].reference", "flex": "1 1 50px",
+                  "notitle": true, "placeholder": "Reference"
+                },
+                { "key": "lightSwitches[].name", "flex": "4 4 200px",
+                  "notitle": true, "placeholder": "Name"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Scenes",
+      "expandable": true,
+      "expanded": true,
+      "items": [
+        {
+          "type": "help",
+          "helpvalue": "Enter the references from the configuration tool for your scenes."
+        },
+        {
+          "nodescription": true,
+          "notitle": true,
+          "key": "scenes",
+          "title": "Scene",
+          "type": "array",
+          "listItems": 1,
+          "items": [
+            {
+              "type": "div",
+              "displayFlex": true,
+              "flex-direction": "row",
+              "items": [
+                { "key": "scenes[].reference", "flex": "1 1 50px",
+                  "notitle": true, "placeholder": "Reference"
+                },
+                { "key": "scenes[].name", "flex": "4 4 200px",
+                  "notitle": true, "placeholder": "Name"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

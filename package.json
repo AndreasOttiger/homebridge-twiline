@@ -1,17 +1,18 @@
 {
   "private": true,
-  "displayName": "Plugin Name",
-  "name": "homebridge-plugin-name",
+  "displayName": "Homebridge TWILINE",
+  "name": "homebridge-twiline",
   "version": "1.0.0",
-  "description": "A short description about what your plugin does.",
+  "author": "Andreas Ottiger",
+  "description": "Access your TWILINE smart home as homekit accessories.",
   "license": "Apache-2.0",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "git+https://github.com/AndreasOttiger/homebridge-twiline.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/AndreasOttiger/homebridge-twiline/issues"
   },
   "engines": {
     "node": "^18.17.0 || ^20.9.0",
