@@ -3,6 +3,7 @@ import { API, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig,
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
 import { TwilinePlatformAccessory } from './platformAccessory.js';
 import { SupportedAccessories } from './const.js';
+import { TcpClient } from './TcpClient.js';
 
 /**
  * HomebridgePlatform
@@ -12,6 +13,7 @@ import { SupportedAccessories } from './const.js';
 export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
+  public twilineClient: TcpClient;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
@@ -40,6 +42,17 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
       log.debug('Executed didFinishLaunching callback');
       // run the method to discover / register your devices as accessories
       this.discoverDevices();
+    });
+
+    this.twilineClient = new TcpClient(this.config.twiline_ip, this.config.twiline_port, log);
+
+    this.twilineClient.on('connected', () => {
+      log.info('Successfully connected to the server');
+    });
+
+    // TODO real stuff here
+    this.twilineClient.on('data', (data: string) => {
+      log.debug('Received from server:', data);
     });
   }
 
