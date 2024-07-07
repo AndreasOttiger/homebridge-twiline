@@ -9,7 +9,7 @@ import { TcpClient } from '../platform/TcpClient.js';
 import { SignalType, TwilineMessage } from '../platform/signal.js';
 import { TwilineAccessory } from './TwilineAccessory.js';
 
-export class LightAccessory implements TwilineAccessory {
+export class SceneAccessory implements TwilineAccessory {
   private readonly service: Service;
   private states = {
     On: false,
@@ -23,8 +23,8 @@ export class LightAccessory implements TwilineAccessory {
     private readonly twilineClient: TcpClient,
   ) {
 
-    this.service = this.accessory.getService(this.platform.Service.Lightbulb) ||
-      this.accessory.addService(this.platform.Service.Lightbulb);
+    this.service = this.accessory.getService(this.platform.Service.Switch) ||
+      this.accessory.addService(this.platform.Service.Switch);
 
     this.service.setCharacteristic(this.platform.Characteristic.Name, name);
 
@@ -59,9 +59,9 @@ export class LightAccessory implements TwilineAccessory {
     this.states.On = value as boolean;
     let signalType : SignalType;
     if (this.states.On) {
-      signalType = SignalType.On;
+      signalType = SignalType.SceneShow;
     } else {
-      signalType = SignalType.Off;
+      signalType = SignalType.SceneToggle;
     }
     const twilineMessage = new TwilineMessage.Builder().setType(signalType).setReceiver(this.reference).build();
     const jsonString = JSON.stringify(twilineMessage);

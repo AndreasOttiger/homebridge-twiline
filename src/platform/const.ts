@@ -1,5 +1,6 @@
 export enum SupportedAccessories {
     Light,
+    Switch,
     Scene
 }
 

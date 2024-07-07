@@ -1,12 +1,13 @@
 import { API, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
 import { PLATFORM_NAME, PLUGIN_NAME } from '../settings.js';
-import { TwilinePlatformAccessory } from './platformAccessory.js';
 import { SupportedAccessories } from './const.js';
 import { TcpClient } from './TcpClient.js';
 import { LightAccessory } from '../accessories/LightAccessory.js';
 import { SignalType, TwilineMessage } from './signal.js';
 import { TwilineAccessory } from '../accessories/TwilineAccessory.js';
+import { StatelessSwitchAccessory } from '../accessories/StatelessSwitchAccessory.js';
+import { SceneAccessory } from '../accessories/SceneAccessory.js';
 
 /**
  * HomebridgePlatform
@@ -82,7 +83,11 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
             accessory.handleMessage(message);
           }
         } catch (error) {
-          log.error(`Failed parsing JSON "${data}"`);
+          if (error instanceof SyntaxError) {
+            log.error(`JSON parsing error for '${jsonString}':`, error.message);
+          } else {
+            log.error(`Unexpected error for '${jsonString}':`, error);
+          }
         }
       });
     });
@@ -111,8 +116,11 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
     for (const device of this.config.lightSwitches) {
       devices.push({twilineReference: device.reference, twilineName: device.name, accessoryType: SupportedAccessories.Light});
     }
-    for (const device of this.config.scenes) {  // eslint-disable-line @typescript-eslint/no-unused-vars
-      //devices.push({twilineReference: device.reference, twilineName: device.name, accessoryType: SupportedAccessories.Scene});
+    for (const device of this.config.switches) {
+      devices.push({twilineReference: device.reference, twilineName: device.name, accessoryType: SupportedAccessories.Switch});
+    }
+    for (const device of this.config.scenes) {
+      devices.push({twilineReference: device.reference, twilineName: device.name, accessoryType: SupportedAccessories.Scene});
     }
 
     // clear the cache ... somehow... whatever TODO
@@ -136,25 +144,9 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
-        if (device.accessoryType === SupportedAccessories.Light) {
-          this.twilineAccessories.push(new LightAccessory(
-            this,
-            existingAccessory,
-            device.twilineReference,
-            device.twilineName,
-            this.twilineClient));
-        } else {
-          new TwilinePlatformAccessory(this, existingAccessory);
-        }
-
-        // TODO development - so notwendig?
-        // this.log.debug('updating accessories', existingAccessory.displayName);
-        // this.api.updatePlatformAccessories([existingAccessory]);
-
-        // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, e.g.:
-        // remove platform accessories when no longer present
-        // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
-        // this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
+        this.twilineAccessories.push(
+          this.createAccessory(device.accessoryType, existingAccessory, device.twilineReference, device.twilineName),
+        );
       } else {
         // the accessory does not yet exist, so we need to create it
         this.log.info('Adding new accessory:', device.twilineReference, device.twilineName);
@@ -168,21 +160,50 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        if (device.accessoryType === SupportedAccessories.Light) {
-          this.twilineAccessories.push(new LightAccessory(
-            this,
-            accessory,
-            device.twilineReference,
-            device.twilineName,
-            this.twilineClient));
-        } else {
-          new TwilinePlatformAccessory(this, accessory);
-        }
-
+        this.twilineAccessories.push(
+          this.createAccessory(device.accessoryType, accessory, device.twilineReference, device.twilineName),
+        );
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
         this.accessories.push(accessory);
       }
     }
+  }
+
+  createAccessory(
+    accessoryType : SupportedAccessories,
+    accessory : PlatformAccessory,
+    reference: string,
+    name : string) : TwilineAccessory {
+    let twilineAccessory : TwilineAccessory;
+    switch(accessoryType) {
+      case SupportedAccessories.Light:
+        twilineAccessory = new LightAccessory(
+          this,
+          accessory,
+          reference,
+          name,
+          this.twilineClient);
+        break;
+      case SupportedAccessories.Switch:
+        twilineAccessory = new StatelessSwitchAccessory(
+          this,
+          accessory,
+          reference,
+          name,
+          this.twilineClient);
+        break;
+      case SupportedAccessories.Scene:
+        twilineAccessory = new SceneAccessory(
+          this,
+          accessory,
+          reference,
+          name,
+          this.twilineClient);
+        break;
+      default:
+        throw new Error('Unknown accessory type.');
+    }
+    return twilineAccessory;
   }
 }

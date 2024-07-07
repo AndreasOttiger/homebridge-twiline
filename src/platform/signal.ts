@@ -13,7 +13,8 @@ export enum SignalType {
     SendMeState = 'SEND_ME_STATE',
     RmLedState = 'RMLED_STATE',
     SceneAdjusting = 'SCENE_ADJUSTING',
-    SceneSave = 'SCENE_SAVE'
+    SceneSave = 'SCENE_SAVE',
+    SceneInfo = 'SCENE_INFO'
 }
 
 export class Signal {

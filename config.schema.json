@@ -37,6 +37,23 @@
           }
         }
       },
+      "switches": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+              "reference": {
+                  "title": "Reference",
+                  "type": "string",
+                  "required": true
+              },
+              "name": {
+                  "title": "Name",
+                  "type": "string"
+              }
+          }
+        }
+      },
       "scenes": {
         "type": "array",
         "items": {
@@ -96,10 +113,45 @@
               "displayFlex": true,
               "flex-direction": "row",
               "items": [
-                { "key": "lightSwitches[].reference", "flex": "1 1 50px",
+                { "key": "lightSwitches[].reference", "flex": "1 1 100px",
                   "notitle": true, "placeholder": "Reference"
                 },
                 { "key": "lightSwitches[].name", "flex": "4 4 200px",
+                  "notitle": true, "placeholder": "Name"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Switches",
+      "expandable": true,
+      "expanded": true,
+      "items": [
+        {
+          "type": "help",
+          "helpvalue": "Switches have no state but are just pressed once. If you add a button in TWILINE this is the one you want."
+        },
+        {
+          "nodescription": true,
+          "notitle": true,
+          "key": "switches",
+          "title": "Switch",
+          "type": "array",
+          "listItems": 1,
+          "items": [
+            {
+              "type": "div",
+              "displayFlex": true,
+              "flex-direction": "row",
+              "items": [
+                { "key": "switches[].reference", "flex": "1 1 100px",
+                  "notitle": true, "placeholder": "Reference"
+                },
+                { "key": "switches[].name", "flex": "4 4 200px",
                   "notitle": true, "placeholder": "Name"
                 }
               ]
@@ -116,7 +168,7 @@
       "items": [
         {
           "type": "help",
-          "helpvalue": "Enter the references from the configuration tool for your scenes."
+          "helpvalue": "Enter the references from the configuration tool for your scenes. Scenes can be turned off an on again."
         },
         {
           "nodescription": true,
@@ -131,7 +183,7 @@
               "displayFlex": true,
               "flex-direction": "row",
               "items": [
-                { "key": "scenes[].reference", "flex": "1 1 50px",
+                { "key": "scenes[].reference", "flex": "1 1 100px",
                   "notitle": true, "placeholder": "Reference"
                 },
                 { "key": "scenes[].name", "flex": "4 4 200px",
