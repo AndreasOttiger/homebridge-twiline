@@ -25,18 +25,17 @@ export class TcpClient extends EventEmitter {
     */
   private setupConnection(): void {
     this.client.connect(this.port, this.host, () => {
-      this.log.info('Connected to', this.host, this.port);
+      this.log.info(`Connected to ${this.host}:${this.port}`);
       this.emit('connected');
     });
 
     this.client.on('data', (data: Buffer) => {
-      this.log.debug('Received data:', data.toString());
-      this.emit('data', data.toString());
+      this.log.debug('Received data:', data.toString().trim());
+      this.emit('data', data.toString().trim());
     });
 
     this.client.on('error', (err: Error) => {
       this.log.error('Socket error:', err);
-      //      this.reconnect();
     });
 
     this.client.on('close', () => {
@@ -56,6 +55,7 @@ export class TcpClient extends EventEmitter {
   }
 
   public write(message: string): void {
+    this.log.debug('Write data:', message);
     this.client.write(message);
   }
 

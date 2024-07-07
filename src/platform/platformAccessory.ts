@@ -60,7 +60,7 @@ export class TwilinePlatformAccessory {
      * The USER_DEFINED_SUBTYPE must be unique to the platform accessory (if you platform exposes multiple accessories, each accessory
      * can use the same subtype id.)
      */
-
+    return; // TODO
     // Example: add two "motion sensor" services to the accessory
     const motionSensorOneService = this.accessory.getService('Motion Sensor One Name') ||
       this.accessory.addService(this.platform.Service.MotionSensor, 'Motion Sensor One Name', 'YourUniqueIdentifier-1');

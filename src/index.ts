@@ -1,7 +1,7 @@
 import { API } from 'homebridge';
 
 import { PLATFORM_NAME } from './settings.js';
-import { TwilineHomebridgePlatform } from './platform.js';
+import { TwilineHomebridgePlatform } from './platform/platform.js';
 
 /**
  * This method registers the platform with Homebridge

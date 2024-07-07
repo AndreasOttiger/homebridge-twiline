@@ -1,9 +1,12 @@
 import { API, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
-import { PLATFORM_NAME, PLUGIN_NAME } from './settings.js';
+import { PLATFORM_NAME, PLUGIN_NAME } from '../settings.js';
 import { TwilinePlatformAccessory } from './platformAccessory.js';
 import { SupportedAccessories } from './const.js';
 import { TcpClient } from './TcpClient.js';
+import { LightAccessory } from '../accessories/LightAccessory.js';
+import { SignalType, TwilineMessage } from './signal.js';
+import { TwilineAccessory } from '../accessories/TwilineAccessory.js';
 
 /**
  * HomebridgePlatform
@@ -17,6 +20,7 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
+  public readonly twilineAccessories: TwilineAccessory[] = [];
 
   constructor(
     public readonly log: Logging,
@@ -40,6 +44,12 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
     // to start discovery of new accessories.
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
+
+      // TODO aufraeumen
+      this.log.warn('Clearing the cache...');
+      this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, this.accessories);
+      this.accessories.length = 0;
+
       // run the method to discover / register your devices as accessories
       this.discoverDevices();
     });
@@ -50,10 +60,33 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
       log.info('Successfully connected to the server');
     });
 
-    // TODO real stuff here
     this.twilineClient.on('data', (data: string) => {
-      log.debug('Received from server:', data);
+      const jsonStrings: string[] = data.split('\n').map(str => str.trim());
+      jsonStrings.forEach(jsonString => {
+        if (jsonString.length === 0) {
+          return;
+        }
+        try {
+          const message: TwilineMessage = JSON.parse(jsonString);
+          // Cast the type to the enum
+          message.signal.type = message.signal.type as SignalType;
+          log.debug(`Message from sender: ${message.signal.sender} of type ${message.signal.type}`);
+          if (message.signal.sender === undefined) {
+            throw new Error('Sender in message not defined.');
+          }
+          const accessory = this.twilineAccessories.find(accessory => accessory.reference === message.signal.sender);
+          if (accessory === undefined) {
+            this.log.info(`Accessory reference ${message.signal.sender} is configured in TWILINE but not in the plugin.`);
+          } else {
+            this.log.debug(`found message for accessory ${accessory.reference}`);
+            accessory.handleMessage(message);
+          }
+        } catch (error) {
+          log.error(`Failed parsing JSON "${data}"`);
+        }
+      });
     });
+
   }
 
   /**
@@ -78,18 +111,21 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
     for (const device of this.config.lightSwitches) {
       devices.push({twilineReference: device.reference, twilineName: device.name, accessoryType: SupportedAccessories.Light});
     }
-    for (const device of this.config.scenes) {
-      devices.push({twilineReference: device.reference, twilineName: device.name, accessoryType: SupportedAccessories.Scene});
+    for (const device of this.config.scenes) {  // eslint-disable-line @typescript-eslint/no-unused-vars
+      //devices.push({twilineReference: device.reference, twilineName: device.name, accessoryType: SupportedAccessories.Scene});
     }
+
+    // clear the cache ... somehow... whatever TODO
 
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of devices) {
+      // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. e.g.:
+      // existingAccessory.context.device = device;
 
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
       const uuid = this.api.hap.uuid.generate(device.twilineReference);
-
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
       const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
@@ -98,13 +134,22 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
         // the accessory already exists
         this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
 
-        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. e.g.:
-        // existingAccessory.context.device = device;
-        // this.api.updatePlatformAccessories([existingAccessory]);
-
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
-        new TwilinePlatformAccessory(this, existingAccessory);
+        if (device.accessoryType === SupportedAccessories.Light) {
+          this.twilineAccessories.push(new LightAccessory(
+            this,
+            existingAccessory,
+            device.twilineReference,
+            device.twilineName,
+            this.twilineClient));
+        } else {
+          new TwilinePlatformAccessory(this, existingAccessory);
+        }
+
+        // TODO development - so notwendig?
+        // this.log.debug('updating accessories', existingAccessory.displayName);
+        // this.api.updatePlatformAccessories([existingAccessory]);
 
         // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, e.g.:
         // remove platform accessories when no longer present
@@ -112,10 +157,10 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
         // this.log.info('Removing existing accessory from cache:', existingAccessory.displayName);
       } else {
         // the accessory does not yet exist, so we need to create it
-        this.log.info('Adding new accessory:', device.twilineName);
+        this.log.info('Adding new accessory:', device.twilineReference, device.twilineName);
 
         // create a new accessory
-        const accessory = new this.api.platformAccessory(device.twilineName, uuid);
+        const accessory = new this.api.platformAccessory(device.twilineReference, uuid);
 
         // store a copy of the device object in the `accessory.context`
         // the `context` property can be used to store any data about the accessory you may need
@@ -123,10 +168,20 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler for the newly create accessory
         // this is imported from `platformAccessory.ts`
-        new TwilinePlatformAccessory(this, accessory);
+        if (device.accessoryType === SupportedAccessories.Light) {
+          this.twilineAccessories.push(new LightAccessory(
+            this,
+            accessory,
+            device.twilineReference,
+            device.twilineName,
+            this.twilineClient));
+        } else {
+          new TwilinePlatformAccessory(this, accessory);
+        }
 
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        this.accessories.push(accessory);
       }
     }
   }
