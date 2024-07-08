@@ -9,18 +9,18 @@ import { TwilineAccessory } from '../accessories/TwilineAccessory.js';
 import { StatelessSwitchAccessory } from '../accessories/StatelessSwitchAccessory.js';
 import { SceneAccessory } from '../accessories/SceneAccessory.js';
 
-/**
- * HomebridgePlatform
- * This class is the main constructor for your plugin, this is where you should
- * parse the user config and discover/register accessories with Homebridge.
- */
 export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
   public twilineClient: TcpClient;
 
-  // this is used to track restored cached accessories
+  /**
+   * used to track restored cached accessories; after initialization it contains all accessories
+   */
   public readonly accessories: PlatformAccessory[] = [];
+  /**
+   * all TwilineAccessory handlers. We need them to pass messages to them.
+   */
   public readonly twilineAccessories: TwilineAccessory[] = [];
 
   constructor(
@@ -46,7 +46,8 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
 
-      // TODO aufraeumen
+      // TODO cleanup. Should not be there. Haven't found a way of proper handling of cached accessories yet.
+      // solution: remove all accessories which have not been found in the configuration again.
       this.log.warn('Clearing the cache...');
       this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, this.accessories);
       this.accessories.length = 0;
@@ -61,6 +62,7 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
       log.info('Successfully connected to the server');
     });
 
+    // register to pass on messages received to the corresponding accessories
     this.twilineClient.on('data', (data: string) => {
       const jsonStrings: string[] = data.split('\n').map(str => str.trim());
       jsonStrings.forEach(jsonString => {
@@ -91,7 +93,6 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
         }
       });
     });
-
   }
 
   /**
@@ -101,14 +102,15 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
   configureAccessory(accessory: PlatformAccessory) {
     this.log.info('Loading accessory from cache:', accessory.displayName);
 
+    // do nothing... we don't need to initialize accessories or similar.
+
     // add the restored accessory to the accessories cache, so we can track if it has already been registered
     this.accessories.push(accessory);
   }
 
   /**
-   * This is an example method showing how to register discovered accessories.
-   * Accessories must only be registered once, previously created accessories
-   * must not be registered again to prevent "duplicate UUID" errors.
+   * create the accessories. Do that by collecting from the configuration   *
+   * TODO could be rewritten a lot nicer.
    */
   discoverDevices() {
     const devices: { twilineReference: string; twilineName: string; accessoryType: SupportedAccessories} [] = [];
@@ -122,8 +124,6 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
     for (const device of this.config.scenes) {
       devices.push({twilineReference: device.reference, twilineName: device.name, accessoryType: SupportedAccessories.Scene});
     }
-
-    // clear the cache ... somehow... whatever TODO
 
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of devices) {

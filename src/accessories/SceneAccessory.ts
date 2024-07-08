@@ -9,6 +9,7 @@ import { TcpClient } from '../platform/TcpClient.js';
 import { SignalType, TwilineMessage } from '../platform/signal.js';
 import { TwilineAccessory } from './TwilineAccessory.js';
 
+// very similar to LightAccessory from which it was copied.
 export class SceneAccessory implements TwilineAccessory {
   private readonly service: Service;
   private states = {
@@ -28,7 +29,6 @@ export class SceneAccessory implements TwilineAccessory {
 
     this.service.setCharacteristic(this.platform.Characteristic.Name, name);
 
-    // properties of the service
     this.service
       .getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.getOn.bind(this))
@@ -55,7 +55,6 @@ export class SceneAccessory implements TwilineAccessory {
   }
 
   private setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    // sets the value
     this.states.On = value as boolean;
     let signalType : SignalType;
     if (this.states.On) {
@@ -66,6 +65,6 @@ export class SceneAccessory implements TwilineAccessory {
     const twilineMessage = new TwilineMessage.Builder().setType(signalType).setReceiver(this.reference).build();
     const jsonString = JSON.stringify(twilineMessage);
     this.twilineClient.write(jsonString);
-    callback(null, this.states.On); // Beispiel: Zustand erfolgreich gesetzt
+    callback(null, this.states.On);
   }
 }

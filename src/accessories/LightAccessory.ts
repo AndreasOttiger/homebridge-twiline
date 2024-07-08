@@ -11,6 +11,9 @@ import { TwilineAccessory } from './TwilineAccessory.js';
 
 export class LightAccessory implements TwilineAccessory {
   private readonly service: Service;
+  /**
+   * internal state of the light switch
+   */
   private states = {
     On: false,
   };
@@ -28,7 +31,6 @@ export class LightAccessory implements TwilineAccessory {
 
     this.service.setCharacteristic(this.platform.Characteristic.Name, name);
 
-    // properties of the service
     this.service
       .getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.getOn.bind(this))
@@ -55,7 +57,6 @@ export class LightAccessory implements TwilineAccessory {
   }
 
   private setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    // sets the value
     this.states.On = value as boolean;
     let signalType : SignalType;
     if (this.states.On) {
@@ -66,6 +67,6 @@ export class LightAccessory implements TwilineAccessory {
     const twilineMessage = new TwilineMessage.Builder().setType(signalType).setReceiver(this.reference).build();
     const jsonString = JSON.stringify(twilineMessage);
     this.twilineClient.write(jsonString);
-    callback(null, this.states.On); // Beispiel: Zustand erfolgreich gesetzt
+    callback(null, this.states.On);
   }
 }

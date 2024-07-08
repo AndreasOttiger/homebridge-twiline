@@ -3,6 +3,7 @@ import { TwilineHomebridgePlatform } from '../platform/platform.js';
 import { SignalType, TwilineMessage } from '../platform/signal.js';
 import { TwilineAccessory } from './TwilineAccessory.js';
 import { TcpClient } from '../platform/TcpClient.js';
+import { SWITCH_PRESS_DURATION } from '../platform/const.js';
 
 export class StatelessSwitchAccessory implements TwilineAccessory {
   private readonly service: Service;
@@ -15,6 +16,7 @@ export class StatelessSwitchAccessory implements TwilineAccessory {
         private readonly twilineClient: TcpClient,
   ) {
 
+    // it maps to the Switch-Accessory, haven't found a better solution
     this.service = this.accessory.getService(this.platform.Service.Switch)
     || this.accessory.addService(this.platform.Service.Switch);
 
@@ -25,13 +27,7 @@ export class StatelessSwitchAccessory implements TwilineAccessory {
       .on('get', this.handleSwitchGet.bind(this));
   }
 
-  /**
-     * as it is stateless there's nothing to trigger here.
-     * @param message will not be used
-     */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleMessage(message: TwilineMessage): void {
-    // do nothing, a status for a switch does not make sense (even though TWILINE sends them)
     if (message.signal.type === SignalType.On) {
       this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(true);
     } else if (message.signal.type === SignalType.Off) {
@@ -43,9 +39,6 @@ export class StatelessSwitchAccessory implements TwilineAccessory {
     callback(null, false);
   }
 
-  /**
-     * Handle requests to get the current value of the "Programmable Switch Event" characteristic
-     */
   handleSwitchSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     if (value) {
       let twilineMessage = new TwilineMessage.Builder().setType(SignalType.On).setReceiver(this.reference).build();
@@ -55,7 +48,7 @@ export class StatelessSwitchAccessory implements TwilineAccessory {
         twilineMessage = new TwilineMessage.Builder().setType(SignalType.Off).setReceiver(this.reference).build();
         jsonString = JSON.stringify(twilineMessage);
         this.twilineClient.write(jsonString);
-      }, 500);
+      }, SWITCH_PRESS_DURATION);
     }
     callback(null);
   }
