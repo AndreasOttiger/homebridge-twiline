@@ -52,4 +52,4 @@ Configuration:
 - The project is still private. That might change though.
 - As there is no synchronous way of getting a TWILINE items status, my way of getting the status is posting a `SEND_ME_STATE` message and hoping that the state is correctly handled.
 - Code is duplicated between accessories as I'm not trusting my abilities do to proper inheritance in TypeScript. And I also don't know where this leads to.
-- Not automated tests. Old school.
+- No automated tests. Old school.
