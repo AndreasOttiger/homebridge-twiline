@@ -5,16 +5,19 @@ import { TwilineAccessory } from './TwilineAccessory.js';
 import { TcpClient } from '../platform/TcpClient.js';
 import { SWITCH_PRESS_DURATION } from '../platform/const.js';
 
-export class StatelessSwitchAccessory implements TwilineAccessory {
+export class StatelessSwitchAccessory extends TwilineAccessory {
   private readonly service: Service;
 
   constructor(
-        private readonly platform: TwilineHomebridgePlatform,
-        private readonly accessory: PlatformAccessory,
-        public readonly reference: string,
-        public readonly name: string,
-        private readonly twilineClient: TcpClient,
+    protected readonly platform: TwilineHomebridgePlatform,
+    protected readonly accessory: PlatformAccessory,
+    public readonly reference: string,
+    public readonly name: string,
+    protected readonly twilineClient: TcpClient,
   ) {
+    super(platform, accessory, reference, name, twilineClient);
+
+    this.removeObsoleteServices(platform.Service.Switch.UUID, name);
 
     // it maps to the Switch-Accessory, haven't found a better solution
     this.service = this.accessory.getService(this.platform.Service.Switch)

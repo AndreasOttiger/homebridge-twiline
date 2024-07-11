@@ -9,22 +9,22 @@ import { TcpClient } from '../platform/TcpClient.js';
 import { SignalType, TwilineMessage } from '../platform/signal.js';
 import { TwilineAccessory } from './TwilineAccessory.js';
 
-export class LightAccessory implements TwilineAccessory {
+export class LightAccessory extends TwilineAccessory {
   private readonly service: Service;
-  /**
-   * internal state of the light switch
-   */
   private states = {
     On: false,
   };
 
   constructor(
-    private readonly platform: TwilineHomebridgePlatform,
-    private readonly accessory: PlatformAccessory,
+    protected readonly platform: TwilineHomebridgePlatform,
+    protected readonly accessory: PlatformAccessory,
     public readonly reference: string,
     public readonly name: string,
-    private readonly twilineClient: TcpClient,
+    protected readonly twilineClient: TcpClient,
   ) {
+    super(platform, accessory, reference, name, twilineClient);
+
+    this.removeObsoleteServices(platform.Service.Lightbulb.UUID, name);
 
     this.service = this.accessory.getService(this.platform.Service.Lightbulb) ||
       this.accessory.addService(this.platform.Service.Lightbulb);
