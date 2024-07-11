@@ -48,7 +48,7 @@ Configuration:
 
 ## Known Limitations/Issues/Todo-list
 - I don't have a deployment process setup. Somewhat next on my todo list. So there's no plugin listed in some public repository or so.
-- I haven't understood how cached accessories are handled. So currently my plugin drops all accessories whenever the plugin is loaded and creates the accessories again. I have no idea if that impacts HomeKit integration
+- Validating the configuration: mostly that one reference might not be reused
 - The project is still private. That might change though.
 - As there is no synchronous way of getting a TWILINE items status, my way of getting the status is posting a `SEND_ME_STATE` message and hoping that the state is correctly handled.
 - Code is duplicated between accessories as I'm not trusting my abilities do to proper inheritance in TypeScript. And I also don't know where this leads to.
