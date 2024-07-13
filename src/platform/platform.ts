@@ -27,7 +27,7 @@ class Device {
 export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service;
   public readonly Characteristic: typeof Characteristic;
-  public twilineClient: TcpClient;
+  public readonly twilineClient: TcpClient;
 
 
   /**
@@ -48,6 +48,11 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
     this.Service = api.hap.Service;
     this.Characteristic = api.hap.Characteristic;
     this.configuredDevices = this.readConfiguredDevices();
+    if (!this.validateDevicesConfiguration(this.configuredDevices)) {
+      // in case of an invalid configuration we don't stop homebridge from loading but only the plugin
+      this.twilineClient = { on: () => {} } as unknown as TcpClient;
+      return;
+    }
 
     this.log.debug('Finished initializing TWILINE platform.');
 
@@ -135,6 +140,10 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory);
   }
 
+  /**
+   * reads the configured devices
+   * @returns an array of devices containing the information from the configuration
+   */
   readConfiguredDevices(): Device[] {
     const devices: Device[] = [];
 
@@ -156,6 +165,31 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
     });
 
     return devices;
+  }
+
+  /**
+   * validates the configuration
+   * - every reference is set
+   * - no reference is used twice
+   * @param devices the configured devices to be validated
+   */
+  validateDevicesConfiguration(devices: Device[]): boolean {
+    let valid : boolean = true;
+    const references = new Set<string>();
+    devices.forEach((device: Device) => {
+      if (!device.twilineReference) {
+        this.log.error('Invalid configuration: a device has an empty \'reference\'.');
+        valid = false;
+      }
+
+      if (references.has(device.twilineReference)) {
+        this.log.error(`Invalid configuration: duplicate reference '${device.twilineReference}' found.`);
+        valid = false;
+      }
+
+      references.add(device.twilineReference);
+    });
+    return valid;
   }
 
   /**
