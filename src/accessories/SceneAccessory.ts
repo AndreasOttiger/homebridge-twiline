@@ -1,20 +1,12 @@
 import {
   PlatformAccessory,
-  Service,
-  CharacteristicGetCallback,
-  CharacteristicValue,
-  CharacteristicSetCallback } from 'homebridge';
+  Service } from 'homebridge';
 import { TwilineHomebridgePlatform } from '../platform/platform.js';
 import { TcpClient } from '../platform/TcpClient.js';
-import { Signal, SignalType, TwilineMessage } from '../platform/signal.js';
-import { TwilineAccessory } from './TwilineAccessory.js';
+import { SignalType } from '../platform/signal.js';
+import { LightAccessory } from './LightAccessory.js';
 
-// very similar to LightAccessory from which it was copied.
-export class SceneAccessory extends TwilineAccessory {
-  private states = {
-    On: false,
-  };
-
+export class SceneAccessory extends LightAccessory {
   constructor(
     protected readonly platform: TwilineHomebridgePlatform,
     protected readonly accessory: PlatformAccessory,
@@ -52,35 +44,11 @@ export class SceneAccessory extends TwilineAccessory {
   /**
    * @override
    */
-  handleSignal(signal: Signal): void {
-    if (signal.type === SignalType.On) {
-      this.states.On = true;
-    } else if (signal.type === SignalType.Off) {
-      this.states.On = false;
-    }
-    this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.states.On);
-  }
-
-  private getOn(callback: CharacteristicGetCallback) {
-    const twilineMessage = new TwilineMessage.Builder()
-      .setType(SignalType.SendMeState)
-      .setReceiver(this.reference)
-      .build();
-    this.twilineClient.write(JSON.stringify(twilineMessage));
-    callback(null, this.states.On);
-  }
-
-  private setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.states.On = value as boolean;
-    let signalType : SignalType;
-    if (this.states.On) {
-      signalType = SignalType.SceneShow;
+  protected getSignalToSend(value: boolean) :SignalType {
+    if (value) {
+      return SignalType.SceneShow;
     } else {
-      signalType = SignalType.SceneToggle;
+      return SignalType.SceneToggle;
     }
-    const twilineMessage = new TwilineMessage.Builder().setType(signalType).setReceiver(this.reference).build();
-    const jsonString = JSON.stringify(twilineMessage);
-    this.twilineClient.write(jsonString);
-    callback(null, this.states.On);
   }
 }

@@ -10,7 +10,7 @@ import { Signal, SignalType, TwilineMessage } from '../platform/signal.js';
 import { TwilineAccessory } from './TwilineAccessory.js';
 
 export class LightAccessory extends TwilineAccessory {
-  private states = {
+  protected states = {
     On: false,
   };
 
@@ -60,7 +60,7 @@ export class LightAccessory extends TwilineAccessory {
     this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.states.On);
   }
 
-  private getOn(callback: CharacteristicGetCallback) {
+  protected getOn(callback: CharacteristicGetCallback) {
     const twilineMessage = new TwilineMessage.Builder()
       .setType(SignalType.SendMeState)
       .setReceiver(this.reference)
@@ -69,17 +69,19 @@ export class LightAccessory extends TwilineAccessory {
     callback(null, this.states.On);
   }
 
-  private setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.states.On = value as boolean;
-    let signalType : SignalType;
-    if (this.states.On) {
-      signalType = SignalType.On;
+  protected getSignalToSend(value: boolean) :SignalType {
+    if (value) {
+      return SignalType.On;
     } else {
-      signalType = SignalType.Off;
+      return SignalType.Off;
     }
-    const twilineMessage = new TwilineMessage.Builder().setType(signalType).setReceiver(this.reference).build();
+  }
+
+  protected setOn(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    this.states.On = value as boolean;
+    const twilineMessage = new TwilineMessage.Builder().setType(this.getSignalToSend(this.states.On)).setReceiver(this.reference).build();
     const jsonString = JSON.stringify(twilineMessage);
     this.twilineClient.write(jsonString);
-    callback(null, this.states.On);
+    callback(null);
   }
 }

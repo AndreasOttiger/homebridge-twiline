@@ -14,7 +14,7 @@ export enum SignalType {
     RmLedState = 'RMLED_STATE',
     SceneAdjusting = 'SCENE_ADJUSTING',
     SceneSave = 'SCENE_SAVE',
-    SceneInfo = 'SCENE_INFO'
+    SceneInfo = 'SCENE_INFO'     // not documented?
 }
 
 export enum MotorState {
