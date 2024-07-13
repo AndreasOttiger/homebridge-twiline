@@ -17,7 +17,7 @@ export class StatelessSwitchAccessory extends TwilineAccessory {
   ) {
     super(platform, accessory, reference, name, twilineClient);
 
-    this.removeObsoleteServices(platform.Service.Switch.UUID, name);
+    this.removeObsoleteServices(platform.Service.Switch.UUID);
 
     // it maps to the Switch-Accessory, haven't found a better solution
     this.service = this.accessory.getService(this.platform.Service.Switch)

@@ -30,11 +30,10 @@ export abstract class TwilineAccessory {
    * Removes obsolete services. This happens if a reference to a TWILINE item was changed
    * to a different accessory type.
    * @param serviceUUID the UUID of the service type
-   * @param name name of the service
    */
-  removeObsoleteServices(serviceUUID: string, name: string) {
+  removeObsoleteServices(serviceUUID: string) {
     this.accessory.services.forEach(service => {
-      if (service.UUID !== serviceUUID || service.displayName !== name) {
+      if (service.UUID !== serviceUUID && service.UUID !== this.platform.Service.AccessoryInformation.UUID) {
         this.accessory.removeService(service);
       }
     });

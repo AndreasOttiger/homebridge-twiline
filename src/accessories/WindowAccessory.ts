@@ -24,7 +24,7 @@ export class WindowAccessory extends TwilineAccessory {
   ) {
     super(platform, accessory, reference, name, twilineClient);
 
-    this.removeObsoleteServices(platform.Service.Window.UUID, name);
+    this.removeObsoleteServices(platform.Service.Window.UUID);
 
     this.service = this.accessory.getService(this.platform.Service.Window) ||
       this.accessory.addService(this.platform.Service.Window);
@@ -49,7 +49,8 @@ export class WindowAccessory extends TwilineAccessory {
     } else if (message.signal.type === SignalType.Off) {
       this.states.On = false;
     }
-    this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.states.On);
+    // TBD
+    // this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.states.On);
   }
 
   private handleTargetPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {

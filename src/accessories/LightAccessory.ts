@@ -24,7 +24,7 @@ export class LightAccessory extends TwilineAccessory {
   ) {
     super(platform, accessory, reference, name, twilineClient);
 
-    this.removeObsoleteServices(platform.Service.Lightbulb.UUID, name);
+    this.removeObsoleteServices(platform.Service.Lightbulb.UUID);
 
     this.service = this.accessory.getService(this.platform.Service.Lightbulb) ||
       this.accessory.addService(this.platform.Service.Lightbulb);

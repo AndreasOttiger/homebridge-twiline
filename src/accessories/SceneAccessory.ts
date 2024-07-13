@@ -25,7 +25,7 @@ export class SceneAccessory extends TwilineAccessory {
   ) {
     super(platform, accessory, reference, name, twilineClient);
 
-    this.removeObsoleteServices(platform.Service.Switch.UUID, name);
+    this.removeObsoleteServices(platform.Service.Switch.UUID);
 
     this.service = this.accessory.getService(this.platform.Service.Switch) ||
       this.accessory.addService(this.platform.Service.Switch);
