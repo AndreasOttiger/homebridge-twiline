@@ -6,14 +6,14 @@ import {
   CharacteristicSetCallback } from 'homebridge';
 import { TwilineHomebridgePlatform } from '../platform/platform.js';
 import { TcpClient } from '../platform/TcpClient.js';
-import { SignalType, TwilineMessage } from '../platform/signal.js';
+import { Command, MotorState, Signal, SignalType, TwilineMessage } from '../platform/signal.js';
 import { TwilineAccessory } from './TwilineAccessory.js';
 
 export class WindowAccessory extends TwilineAccessory {
   private readonly service: Service;
-  private states = {
-    On: false,
-  };
+  private currentPosition: number = 0;
+  private targetPosition: number = 0;
+  private motorState: MotorState = MotorState.MotorStopped;
 
   constructor(
     protected readonly platform: TwilineHomebridgePlatform,
@@ -32,48 +32,100 @@ export class WindowAccessory extends TwilineAccessory {
     this.service.setCharacteristic(this.platform.Characteristic.Name, name);
 
     this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
-      .on('get', this.get.bind(this));
+      .on('get', this.getCurrentPosition.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.PositionState)
-      .on('get', this.get.bind(this));
+      .on('get', this.getPositionState.bind(this));
 
     this.service.getCharacteristic(this.platform.Characteristic.TargetPosition)
-      .on('get', this.get.bind(this))
+      .on('get', this.getTargetPosition.bind(this))
       .on('set', this.handleTargetPositionSet.bind(this));
 
   }
 
-  handleMessage(message: TwilineMessage): void {
-    if (message.signal.type === SignalType.On) {
-      this.states.On = true;
-    } else if (message.signal.type === SignalType.Off) {
-      this.states.On = false;
+  /**
+   * Translates the motor state reported by TWILINE to a position state.
+   * Note: as a fully open window is 100%, opening a window has a motor
+   * moving down, but a position state increasing.
+   */
+  getPositionStateFromMotorState(motor: MotorState) : number {
+    switch (motor) {
+      case MotorState.MotorStopped:
+        return this.platform.Characteristic.PositionState.STOPPED;
+      case MotorState.MotorMovingUp:
+        return this.platform.Characteristic.PositionState.DECREASING;
+      case MotorState.MotorMovingDown:
+      case MotorState.MotorMovingDown2:
+        return this.platform.Characteristic.PositionState.INCREASING;
+      default:
+        // Handle unexpected motorState values
+        throw new Error('MotorState unknown', motor);
     }
-    // TBD
-    // this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.states.On);
+  }
+
+  handleSignal(signal: Signal): void {
+    if (signal.type === SignalType.BlindsPosition) {
+      if (signal.position !== undefined) {
+        this.currentPosition = signal.position;
+        this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition).updateValue(signal.position);
+      }
+
+      if (signal.motor !== undefined) {
+        this.motorState = signal.motor;
+        this.service.getCharacteristic(
+          this.platform.Characteristic.PositionState).updateValue(this.getPositionStateFromMotorState(signal.motor),
+        );
+      }
+    }
   }
 
   private handleTargetPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.states.On = value as boolean;
-    let signalType : SignalType;
-    if (this.states.On) {
-      signalType = SignalType.On;
+    this.targetPosition = value as number;
+    let twilineMessage;
+    if (this.targetPosition !== this.currentPosition) {
+      twilineMessage = new TwilineMessage.Builder()
+        .setType(SignalType.BlindsStart)
+        .setReceiver(this.reference)
+        .setCommand(Command.DriveToPositionCommand)
+        .setEndPosition(this.targetPosition)
+        .build();
     } else {
-      signalType = SignalType.Off;
+      twilineMessage = new TwilineMessage.Builder()
+        .setType(SignalType.BlindsStop)
+        .setReceiver(this.reference)
+        .build();
     }
-    const twilineMessage = new TwilineMessage.Builder().setType(signalType).setReceiver(this.reference).build();
+
     const jsonString = JSON.stringify(twilineMessage);
     this.twilineClient.write(jsonString);
-    callback(null, this.states.On);
+    callback(null);
   }
 
-  private get(callback: CharacteristicGetCallback) {
+  private getCurrentPosition(callback: CharacteristicGetCallback) {
     const twilineMessage = new TwilineMessage.Builder()
       .setType(SignalType.SendMeState)
       .setReceiver(this.reference)
       .build();
     this.twilineClient.write(JSON.stringify(twilineMessage));
-    callback(null, this.states.On);
+    callback(null, this.currentPosition);
+  }
+
+  private getTargetPosition(callback: CharacteristicGetCallback) {
+    const twilineMessage = new TwilineMessage.Builder()
+      .setType(SignalType.SendMeState)
+      .setReceiver(this.reference)
+      .build();
+    this.twilineClient.write(JSON.stringify(twilineMessage));
+    callback(null, this.targetPosition);
+  }
+
+  private getPositionState(callback: CharacteristicGetCallback) {
+    const twilineMessage = new TwilineMessage.Builder()
+      .setType(SignalType.SendMeState)
+      .setReceiver(this.reference)
+      .build();
+    this.twilineClient.write(JSON.stringify(twilineMessage));
+    callback(null, this.getPositionStateFromMotorState(this.motorState));
   }
 
 }

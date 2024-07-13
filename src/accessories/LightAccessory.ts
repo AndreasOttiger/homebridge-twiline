@@ -6,7 +6,7 @@ import {
   CharacteristicSetCallback } from 'homebridge';
 import { TwilineHomebridgePlatform } from '../platform/platform.js';
 import { TcpClient } from '../platform/TcpClient.js';
-import { SignalType, TwilineMessage } from '../platform/signal.js';
+import { Signal, SignalType, TwilineMessage } from '../platform/signal.js';
 import { TwilineAccessory } from './TwilineAccessory.js';
 
 export class LightAccessory extends TwilineAccessory {
@@ -38,10 +38,10 @@ export class LightAccessory extends TwilineAccessory {
 
   }
 
-  handleMessage(message: TwilineMessage): void {
-    if (message.signal.type === SignalType.On) {
+  handleSignal(signal: Signal): void {
+    if (signal.type === SignalType.On) {
       this.states.On = true;
-    } else if (message.signal.type === SignalType.Off) {
+    } else if (signal.type === SignalType.Off) {
       this.states.On = false;
     }
     this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(this.states.On);

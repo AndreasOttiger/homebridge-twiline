@@ -31,7 +31,7 @@ Accessories:
 - Scene: similar to the light, with some difference in setting the state
 - Stateless Switch: you can map a TWILINE item like a physical switch (with no status except pressed or not) to the TCP gateway. You can then send `ON`/`OFF` commands to that switch which is interpreted as pressing/releasing the button. That way you can easily access every functionality TWILINE has already organized in its software and assigned to a switch. Just simulate pressing that switch.
 - Blind: TBD
-- Window: TBD
+- Window: can be set a target position, opened and closed. TWILINE uses blinds in the background/on the TCP gateway.
 
 ## Usage
 

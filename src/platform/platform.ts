@@ -3,7 +3,7 @@ import { API, DynamicPlatformPlugin, Logging, PlatformAccessory, PlatformConfig,
 import { PLATFORM_NAME, PLUGIN_NAME } from '../settings.js';
 import { SupportedAccessories } from './const.js';
 import { TcpClient } from './TcpClient.js';
-import { SignalType, TwilineMessage } from './signal.js';
+import { Signal, SignalType, TwilineMessage } from './signal.js';
 import { TwilineAccessory } from '../accessories/TwilineAccessory.js';
 import { LightAccessory } from '../accessories/LightAccessory.js';
 import { StatelessSwitchAccessory } from '../accessories/StatelessSwitchAccessory.js';
@@ -108,18 +108,23 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
       }
       try {
         const message: TwilineMessage = JSON.parse(jsonString);
-        // Cast the type to the enum
-        message.signal.type = message.signal.type as SignalType;
-        this.log.debug(`Message from sender: ${message.signal.sender} of type ${message.signal.type}`);
-        if (message.signal.sender === undefined) {
-          throw new Error('Sender in message not defined.');
+        if (message.error !== undefined) {
+          // Error handling
+          this.log.error('TWILINE error:', message.error.message);
         }
-        const accessory = this.twilineAccessories.find(accessory => accessory.reference === message.signal.sender);
-        if (accessory === undefined) {
-          this.log.info(`Accessory reference ${message.signal.sender} is configured in TWILINE but not in the plugin.`);
-        } else {
-          this.log.debug(`found message for accessory ${accessory.reference}`);
-          accessory.handleMessage(message);
+        if (message.signal !== undefined) {
+          const signal: Signal = message.signal;
+          signal.type = signal.type as SignalType;
+          this.log.debug(`Message from sender: ${signal.sender} of type ${signal.type}`);
+          if (signal.sender === undefined) {
+            throw new Error('Sender in message not defined.');
+          }
+          const accessory = this.twilineAccessories.find(accessory => accessory.reference === signal.sender);
+          if (accessory === undefined) {
+            this.log.info(`Accessory reference ${signal.sender} is configured in TWILINE but not in the plugin.`);
+          } else {
+            accessory.handleSignal(signal);
+          }
         }
       } catch (error) {
         if (error instanceof SyntaxError) {

@@ -1,6 +1,6 @@
 import { PlatformAccessory } from 'homebridge';
 import { TwilineHomebridgePlatform } from '../platform/platform.js';
-import { TwilineMessage } from '../platform/signal.js';
+import { Signal } from '../platform/signal.js';
 import { TcpClient } from '../platform/TcpClient.js';
 
 /**
@@ -18,13 +18,13 @@ export abstract class TwilineAccessory {
   }
 
   /**
-   * When the platform receives a message for an accessory it will be passed to the accessory
+   * When the platform receives a signal for an accessory it will be passed to the accessory
    * by this method. Mostly it will contain state information that can be used to update the
    * state of an accessory.
    *
-   * @param message the received message as an object, created from the JSON
+   * @param signal the received signal as an object, created from the JSON
    */
-  abstract handleMessage(message: TwilineMessage): void;
+  abstract handleSignal(signal: Signal): void;
 
   /**
    * Removes obsolete services. This happens if a reference to a TWILINE item was changed
