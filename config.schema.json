@@ -241,7 +241,7 @@
       "items": [
         {
           "type": "help",
-          "helpvalue": "Enter the references from the configuration tool for your TBD."
+          "helpvalue": "Enter the references from the configuration tool for blinds. It supports positions/open/close."
         },
         {
           "nodescription": true,
@@ -276,7 +276,7 @@
       "items": [
         {
           "type": "help",
-          "helpvalue": "Enter the references from the configuration tool for your TBD"
+          "helpvalue": "Enter the references from the configuration tool for your windows. It supports positions/open/close."
         },
         {
           "nodescription": true,

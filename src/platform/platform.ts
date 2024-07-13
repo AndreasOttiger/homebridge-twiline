@@ -85,14 +85,6 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
    */
   readonly handleFinishLaunching = () => {
     this.log.debug('Executed didFinishLaunching callback');
-
-    // TODO cleanup. Should not be there. Haven't found a way of proper handling of cached accessories yet.
-    // solution: remove all accessories which have not been found in the configuration again.
-    // this.log.warn('Clearing the cache...');
-    // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, this.accessories);
-    // this.accessories.length = 0;
-
-    // run the method to discover / register your devices as accessories
     this.discoverDevices();
   };
 

@@ -11,7 +11,6 @@ import { TwilineAccessory } from './TwilineAccessory.js';
 
 // very similar to LightAccessory from which it was copied.
 export class SceneAccessory extends TwilineAccessory {
-  private readonly service: Service;
   private states = {
     On: false,
   };
@@ -24,21 +23,35 @@ export class SceneAccessory extends TwilineAccessory {
     protected readonly twilineClient: TcpClient,
   ) {
     super(platform, accessory, reference, name, twilineClient);
+  }
 
-    this.removeObsoleteServices(platform.Service.Switch.UUID);
-
-    this.service = this.accessory.getService(this.platform.Service.Switch) ||
+  /**
+   * @override
+   */
+  protected addService(name: string): Service {
+    const service = this.accessory.getService(this.platform.Service.Switch) ||
       this.accessory.addService(this.platform.Service.Switch);
 
-    this.service.setCharacteristic(this.platform.Characteristic.Name, name);
+    service.setCharacteristic(this.platform.Characteristic.Name, name);
 
-    this.service
+    service
       .getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.getOn.bind(this))
       .on('set', this.setOn.bind(this));
 
+    return service;
   }
 
+  /**
+   * @override
+   */
+  protected getServiceUUID(): string {
+    return this.platform.Service.Switch.UUID;
+  }
+
+  /**
+   * @override
+   */
   handleSignal(signal: Signal): void {
     if (signal.type === SignalType.On) {
       this.states.On = true;

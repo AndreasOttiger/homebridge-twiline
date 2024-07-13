@@ -30,7 +30,7 @@ Accessories:
 - Light: can be simply turned on and off again, has a status
 - Scene: similar to the light, with some difference in setting the state
 - Stateless Switch: you can map a TWILINE item like a physical switch (with no status except pressed or not) to the TCP gateway. You can then send `ON`/`OFF` commands to that switch which is interpreted as pressing/releasing the button. That way you can easily access every functionality TWILINE has already organized in its software and assigned to a switch. Just simulate pressing that switch.
-- Blind: TBD
+- Blind: can be set a target position, opened and closed. The functionality for setting angles is not (yet) implemented
 - Window: can be set a target position, opened and closed. TWILINE uses blinds in the background/on the TCP gateway.
 
 ## Usage
@@ -46,12 +46,12 @@ Configuration:
 
 - Use at your own risk.
 - my own TWILINE installation or currently still the configurations simulator is the baseline against which everything is tested
-- I seriously lack experience in TypeScript, JavaScript, npm and all that stuff. Add HomeBridge, its plugin development, interacting with HomeKit to that list. Heck, this is even my first GitHub project! My goal is being able to integrate TWILINE for myself. It definitely will not be a perfect piece of software.
+- I seriously lack experience in TypeScript, JavaScript, npm and all that stuff (including even GIT). Add HomeBridge, its plugin development, interacting with HomeKit to that list. My goal is being able to integrate TWILINE for myself. It definitely will not be a perfect piece of software.
 
 ## Known Limitations/Issues/Todo-list
 - I don't have a deployment process setup. Somewhat next on my todo list. So there's no plugin listed in some public repository or so.
-- Validating the configuration: mostly that one reference might not be reused
 - The project is still private. That might change though.
 - As there is no synchronous way of getting a TWILINE items status, my way of getting the status is posting a `SEND_ME_STATE` message and hoping that the state is correctly handled.
+- Even after the blinds have reached their destination a final update from TWILINE seems to take quite some time, therefore HomeBridge is displaying a status that is out of sync.
 - Code is duplicated between accessories as I'm not trusting my abilities do to proper inheritance in TypeScript. And I also don't know where this leads to.
-- No automated tests. Old school.
+- No automated tests. Old school. :-o

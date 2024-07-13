@@ -3,17 +3,21 @@ import {
   Service,
   CharacteristicGetCallback,
   CharacteristicValue,
-  CharacteristicSetCallback } from 'homebridge';
+  CharacteristicSetCallback} from 'homebridge';
 import { TwilineHomebridgePlatform } from '../platform/platform.js';
 import { TcpClient } from '../platform/TcpClient.js';
 import { Command, MotorState, Signal, SignalType, TwilineMessage } from '../platform/signal.js';
 import { TwilineAccessory } from './TwilineAccessory.js';
 
 export class WindowAccessory extends TwilineAccessory {
-  private readonly service: Service;
-  private currentPosition: number = 0;
-  private targetPosition: number = 0;
-  private motorState: MotorState = MotorState.MotorStopped;
+  protected currentPosition: number = 0;
+  protected targetPosition: number = 0;
+  protected motorState: MotorState = MotorState.MotorStopped;
+  /**
+   * inverted = false: 100% is open, 0% is closed.
+   */
+  protected readonly inverted = this.getInverted();
+
 
   constructor(
     protected readonly platform: TwilineHomebridgePlatform,
@@ -23,51 +27,72 @@ export class WindowAccessory extends TwilineAccessory {
     protected readonly twilineClient: TcpClient,
   ) {
     super(platform, accessory, reference, name, twilineClient);
+  }
 
-    this.removeObsoleteServices(platform.Service.Window.UUID);
+  /**
+   * @override
+   */
+  protected getServiceUUID(): string {
+    return this.platform.Service.Window.UUID;
+  }
 
-    this.service = this.accessory.getService(this.platform.Service.Window) ||
+  /**
+   * @override
+   */
+  protected addService(name : string): Service {
+    const service = this.accessory.getService(this.platform.Service.Window) ||
       this.accessory.addService(this.platform.Service.Window);
 
-    this.service.setCharacteristic(this.platform.Characteristic.Name, name);
+    service.setCharacteristic(this.platform.Characteristic.Name, name);
 
-    this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
+    service.getCharacteristic(this.platform.Characteristic.CurrentPosition)
       .on('get', this.getCurrentPosition.bind(this));
 
-    this.service.getCharacteristic(this.platform.Characteristic.PositionState)
+    service.getCharacteristic(this.platform.Characteristic.PositionState)
       .on('get', this.getPositionState.bind(this));
 
-    this.service.getCharacteristic(this.platform.Characteristic.TargetPosition)
+    service.getCharacteristic(this.platform.Characteristic.TargetPosition)
       .on('get', this.getTargetPosition.bind(this))
       .on('set', this.handleTargetPositionSet.bind(this));
 
+    return service;
   }
 
   /**
    * Translates the motor state reported by TWILINE to a position state.
-   * Note: as a fully open window is 100%, opening a window has a motor
+   * Note:
+   * - standard: as a fully open window is 100%, opening a window has a motor
    * moving down, but a position state increasing.
+   *  - inverted: the motor moving up means retracting the blinds, opening the view.
+   *  As HomeKit reflects this as 100%, it is therefore increasing.
    */
-  getPositionStateFromMotorState(motor: MotorState) : number {
+  protected getPositionStateFromMotorState(motor: MotorState) : number {
     switch (motor) {
       case MotorState.MotorStopped:
         return this.platform.Characteristic.PositionState.STOPPED;
       case MotorState.MotorMovingUp:
-        return this.platform.Characteristic.PositionState.DECREASING;
+        return this.inverted ?
+          this.platform.Characteristic.PositionState.INCREASING :
+          this.platform.Characteristic.PositionState.DECREASING;
       case MotorState.MotorMovingDown:
       case MotorState.MotorMovingDown2:
-        return this.platform.Characteristic.PositionState.INCREASING;
+        return this.inverted ?
+          this.platform.Characteristic.PositionState.DECREASING :
+          this.platform.Characteristic.PositionState.INCREASING;
       default:
         // Handle unexpected motorState values
         throw new Error('MotorState unknown', motor);
     }
   }
 
+  /**
+   * @override
+   */
   handleSignal(signal: Signal): void {
     if (signal.type === SignalType.BlindsPosition) {
       if (signal.position !== undefined) {
-        this.currentPosition = signal.position;
-        this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition).updateValue(signal.position);
+        this.currentPosition = this.inverted ? 100 - signal.position : signal.position;
+        this.service.getCharacteristic(this.platform.Characteristic.CurrentPosition).updateValue(this.currentPosition);
       }
 
       if (signal.motor !== undefined) {
@@ -79,7 +104,7 @@ export class WindowAccessory extends TwilineAccessory {
     }
   }
 
-  private handleTargetPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  protected handleTargetPositionSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     this.targetPosition = value as number;
     let twilineMessage;
     if (this.targetPosition !== this.currentPosition) {
@@ -87,7 +112,7 @@ export class WindowAccessory extends TwilineAccessory {
         .setType(SignalType.BlindsStart)
         .setReceiver(this.reference)
         .setCommand(Command.DriveToPositionCommand)
-        .setEndPosition(this.targetPosition)
+        .setEndPosition(this.inverted ? 100 - (this.targetPosition as number) : this.targetPosition)
         .build();
     } else {
       twilineMessage = new TwilineMessage.Builder()
@@ -101,7 +126,7 @@ export class WindowAccessory extends TwilineAccessory {
     callback(null);
   }
 
-  private getCurrentPosition(callback: CharacteristicGetCallback) {
+  protected getCurrentPosition(callback: CharacteristicGetCallback) {
     const twilineMessage = new TwilineMessage.Builder()
       .setType(SignalType.SendMeState)
       .setReceiver(this.reference)
@@ -110,7 +135,7 @@ export class WindowAccessory extends TwilineAccessory {
     callback(null, this.currentPosition);
   }
 
-  private getTargetPosition(callback: CharacteristicGetCallback) {
+  protected getTargetPosition(callback: CharacteristicGetCallback) {
     const twilineMessage = new TwilineMessage.Builder()
       .setType(SignalType.SendMeState)
       .setReceiver(this.reference)
@@ -119,7 +144,7 @@ export class WindowAccessory extends TwilineAccessory {
     callback(null, this.targetPosition);
   }
 
-  private getPositionState(callback: CharacteristicGetCallback) {
+  protected getPositionState(callback: CharacteristicGetCallback) {
     const twilineMessage = new TwilineMessage.Builder()
       .setType(SignalType.SendMeState)
       .setReceiver(this.reference)
@@ -128,4 +153,13 @@ export class WindowAccessory extends TwilineAccessory {
     callback(null, this.getPositionStateFromMotorState(this.motorState));
   }
 
+  /**
+   * inverted = false: 100% is open, 0% is closed.
+   */
+  protected getInverted(): boolean {
+    return false;
+  }
 }
+
+
+

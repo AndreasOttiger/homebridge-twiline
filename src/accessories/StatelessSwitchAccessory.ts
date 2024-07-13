@@ -6,8 +6,6 @@ import { TcpClient } from '../platform/TcpClient.js';
 import { SWITCH_PRESS_DURATION } from '../platform/const.js';
 
 export class StatelessSwitchAccessory extends TwilineAccessory {
-  private readonly service: Service;
-
   constructor(
     protected readonly platform: TwilineHomebridgePlatform,
     protected readonly accessory: PlatformAccessory,
@@ -16,20 +14,34 @@ export class StatelessSwitchAccessory extends TwilineAccessory {
     protected readonly twilineClient: TcpClient,
   ) {
     super(platform, accessory, reference, name, twilineClient);
-
-    this.removeObsoleteServices(platform.Service.Switch.UUID);
-
-    // it maps to the Switch-Accessory, haven't found a better solution
-    this.service = this.accessory.getService(this.platform.Service.Switch)
-    || this.accessory.addService(this.platform.Service.Switch);
-
-    this.service.setCharacteristic(this.platform.Characteristic.Name, name);
-
-    this.service.getCharacteristic(this.platform.Characteristic.On)
-      .on('set', this.handleSwitchSet.bind(this))
-      .on('get', this.handleSwitchGet.bind(this));
   }
 
+  /**
+   * @override
+   */
+  protected addService(name: string): Service {
+    const service = this.accessory.getService(this.platform.Service.Switch) ||
+      this.accessory.addService(this.platform.Service.Switch);
+
+    service.setCharacteristic(this.platform.Characteristic.Name, name);
+
+    service.getCharacteristic(this.platform.Characteristic.On)
+      .on('set', this.handleSwitchSet.bind(this))
+      .on('get', this.handleSwitchGet.bind(this));
+
+    return service;
+  }
+
+  /**
+   * @override
+   */
+  protected getServiceUUID(): string {
+    return this.platform.Service.Switch.UUID;
+  }
+
+  /**
+   * @override
+   */
   handleSignal(signal: Signal): void {
     if (signal.type === SignalType.On) {
       this.service.getCharacteristic(this.platform.Characteristic.On).updateValue(true);

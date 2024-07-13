@@ -10,7 +10,6 @@ import { Signal, SignalType, TwilineMessage } from '../platform/signal.js';
 import { TwilineAccessory } from './TwilineAccessory.js';
 
 export class LightAccessory extends TwilineAccessory {
-  private readonly service: Service;
   private states = {
     On: false,
   };
@@ -23,21 +22,35 @@ export class LightAccessory extends TwilineAccessory {
     protected readonly twilineClient: TcpClient,
   ) {
     super(platform, accessory, reference, name, twilineClient);
+  }
 
-    this.removeObsoleteServices(platform.Service.Lightbulb.UUID);
+  /**
+   * @override
+   */
+  protected addService(name: string): Service {
+    const service = this.accessory.getService(this.platform.Service.Lightbulb) ||
+    this.accessory.addService(this.platform.Service.Lightbulb);
 
-    this.service = this.accessory.getService(this.platform.Service.Lightbulb) ||
-      this.accessory.addService(this.platform.Service.Lightbulb);
+    service.setCharacteristic(this.platform.Characteristic.Name, name);
 
-    this.service.setCharacteristic(this.platform.Characteristic.Name, name);
-
-    this.service
+    service
       .getCharacteristic(this.platform.Characteristic.On)
       .on('get', this.getOn.bind(this))
       .on('set', this.setOn.bind(this));
 
+    return service;
   }
 
+  /**
+   * @override
+   */
+  protected getServiceUUID(): string {
+    return this.platform.Service.Lightbulb.UUID;
+  }
+
+  /**
+   * @override
+   */
   handleSignal(signal: Signal): void {
     if (signal.type === SignalType.On) {
       this.states.On = true;
