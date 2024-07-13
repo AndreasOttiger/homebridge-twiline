@@ -70,6 +70,40 @@
               }
           }
         }
+      },
+      "blinds": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+              "reference": {
+                  "title": "Reference",
+                  "type": "string",
+                  "required": true
+              },
+              "name": {
+                  "title": "Name",
+                  "type": "string"
+              }
+          }
+        }
+      },
+      "windows": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+              "reference": {
+                  "title": "Reference",
+                  "type": "string",
+                  "required": true
+              },
+              "name": {
+                  "title": "Name",
+                  "type": "string"
+              }
+          }
+        }
       }
     }
   },
@@ -87,6 +121,10 @@
           "type": "flex",
           "flex-flow": "column",
           "items": ["twiline_port"]
+        },
+        {
+          "type": "help",
+          "helpvalue": "Each configured device needs a reference and has an optional description. The reference has to be unique."
         }
       ]
     },
@@ -187,6 +225,76 @@
                   "notitle": true, "placeholder": "Reference"
                 },
                 { "key": "scenes[].name", "flex": "4 4 200px",
+                  "notitle": true, "placeholder": "Name"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Blinds",
+      "expandable": true,
+      "expanded": true,
+      "items": [
+        {
+          "type": "help",
+          "helpvalue": "Enter the references from the configuration tool for your TBD."
+        },
+        {
+          "nodescription": true,
+          "notitle": true,
+          "key": "blinds",
+          "title": "Blind",
+          "type": "array",
+          "listItems": 1,
+          "items": [
+            {
+              "type": "div",
+              "displayFlex": true,
+              "flex-direction": "row",
+              "items": [
+                { "key": "blinds[].reference", "flex": "1 1 100px",
+                  "notitle": true, "placeholder": "Reference"
+                },
+                { "key": "blinds[].name", "flex": "4 4 200px",
+                  "notitle": true, "placeholder": "Name"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "fieldset",
+      "title": "Windows",
+      "expandable": true,
+      "expanded": true,
+      "items": [
+        {
+          "type": "help",
+          "helpvalue": "Enter the references from the configuration tool for your TBD"
+        },
+        {
+          "nodescription": true,
+          "notitle": true,
+          "key": "windows",
+          "title": "Window",
+          "type": "array",
+          "listItems": 1,
+          "items": [
+            {
+              "type": "div",
+              "displayFlex": true,
+              "flex-direction": "row",
+              "items": [
+                { "key": "windows[].reference", "flex": "1 1 100px",
+                  "notitle": true, "placeholder": "Reference"
+                },
+                { "key": "windows[].name", "flex": "4 4 200px",
                   "notitle": true, "placeholder": "Name"
                 }
               ]

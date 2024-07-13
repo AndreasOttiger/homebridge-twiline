@@ -33,7 +33,6 @@ export abstract class TwilineAccessory {
    * @param name name of the service
    */
   removeObsoleteServices(serviceUUID: string, name: string) {
-    // Remove services that do not match type (Lightbulb) and name
     this.accessory.services.forEach(service => {
       if (service.UUID !== serviceUUID || service.displayName !== name) {
         this.accessory.removeService(service);

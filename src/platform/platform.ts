@@ -8,14 +8,17 @@ import { TwilineAccessory } from '../accessories/TwilineAccessory.js';
 import { LightAccessory } from '../accessories/LightAccessory.js';
 import { StatelessSwitchAccessory } from '../accessories/StatelessSwitchAccessory.js';
 import { SceneAccessory } from '../accessories/SceneAccessory.js';
+import { WindowAccessory } from '../accessories/WindowAccessory.js';
+import { BlindAccessory } from '../accessories/BlindAccessory.js';
 
 class Device {
   public readonly uuid: string;
-  constructor(
-  public readonly twilineReference: string,
-  public readonly twilineName: string,
-  public readonly accessoryType: SupportedAccessories,
-  api: API,
+  constructor
+  (
+    public readonly twilineReference: string,
+    public readonly twilineName: string,
+    public readonly accessoryType: SupportedAccessories,
+    api: API,
   ) {
     // generate a unique id for the accessory this should be generated from
     // something globally unique, but constant, for example, the device serial
@@ -152,6 +155,8 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
       { configKey: 'lightSwitches', accessoryType: SupportedAccessories.Light },
       { configKey: 'switches', accessoryType: SupportedAccessories.Switch },
       { configKey: 'scenes', accessoryType: SupportedAccessories.Scene },
+      { configKey: 'blinds', accessoryType: SupportedAccessories.Blind },
+      { configKey: 'windows', accessoryType: SupportedAccessories.Window },
     ];
 
     // Iterate over each mapping and corresponding configuration
@@ -160,6 +165,9 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
       if (configDevices && configDevices.length > 0) {
         configDevices.forEach((configDevice: { reference: string; name: string }) => {
           devices.push(new Device(configDevice.reference, configDevice.name, mapping.accessoryType, this.api));
+          this.log.debug(
+            `Read device from config. Reference ${configDevice.reference}, Name ${configDevice.name}, type ${mapping.configKey}`,
+          );
         });
       }
     });
@@ -304,6 +312,22 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
         break;
       case SupportedAccessories.Scene:
         twilineAccessory = new SceneAccessory(
+          platform,
+          accessory,
+          reference,
+          name,
+          twilineClient);
+        break;
+      case SupportedAccessories.Blind:
+        twilineAccessory = new BlindAccessory(
+          platform,
+          accessory,
+          reference,
+          name,
+          twilineClient);
+        break;
+      case SupportedAccessories.Window:
+        twilineAccessory = new WindowAccessory(
           platform,
           accessory,
           reference,
