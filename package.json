@@ -1,5 +1,5 @@
 {
-  "private": true,
+  "private": false,
   "displayName": "Homebridge TWILINE",
   "name": "homebridge-twiline",
   "version": "0.1.0",
