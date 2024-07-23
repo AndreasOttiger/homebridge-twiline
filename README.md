@@ -45,7 +45,6 @@ Configuration:
 ## Note
 
 - Use at your own risk.
-- my own TWILINE installation or currently still the configurations simulator is the baseline against which everything is tested
 - I seriously lack experience in TypeScript, JavaScript, npm and all that stuff (including even GIT). Add HomeBridge, its plugin development, interacting with HomeKit to that list. My goal is being able to integrate TWILINE for myself. It definitely will not be a perfect piece of software.
 
 ## Known Limitations/Issues/Todo-list
