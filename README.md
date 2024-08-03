@@ -46,12 +46,4 @@ Configuration:
 
 - Use at your own risk.
 - I seriously lack experience in TypeScript, JavaScript, npm and all that stuff (including even GIT). Add HomeBridge, its plugin development, interacting with HomeKit to that list. My goal is being able to integrate TWILINE for myself. It definitely will not be a perfect piece of software.
-
-## Known Limitations/Issues/Todo-list
-- When for example turning multiple lights on with HomeKit the plugin doesn't handle that correctly. Only none or one of the lights gets turned on.
-- The plugin supplies the names to HomeKit the wrong way round (References instead of names are getting used).
-- Blinds and windows look always "turned on" in HomeKit
-- The state of blinds, windows, ... at HomeBridge startup are wrong.
 - As there is no synchronous way of getting a TWILINE items status, my way of getting the status is posting a `SEND_ME_STATE` message and hoping that the state is correctly handled.
-- Even after the blinds have reached their destination a final update from TWILINE seems to take quite some time, therefore HomeBridge is displaying a status that is out of sync.
-- No automated tests. Old school. :-o
