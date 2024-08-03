@@ -103,6 +103,7 @@ export class TwilineHomebridgePlatform implements DynamicPlatformPlugin {
         if (message.error !== undefined) {
           // Error handling
           this.log.error('TWILINE error:', message.error.message);
+          // TODO also log error message itself.
         }
         if (message.signal !== undefined) {
           const signal: Signal = message.signal;
