@@ -1,11 +1,13 @@
 import * as net from 'net';
 import { EventEmitter } from 'events';
-import { RECONNECT_DELAY } from './const.js';
+import { RECONNECT_DELAY, TWILINE_MESSAGE_PROCESSING_TIME } from './const.js';
 import { Logging } from 'homebridge';
 
 export class TcpClient extends EventEmitter {
   private client: net.Socket;
-  private reconnectDelay: number = RECONNECT_DELAY; // 2 seconds
+  private reconnectDelay: number = RECONNECT_DELAY;
+  private messageQueue: string[] = [];
+  private isProcessingQueue: boolean = false;
 
   constructor(
     private readonly host: string,
@@ -54,13 +56,41 @@ export class TcpClient extends EventEmitter {
     }, this.reconnectDelay);
   }
 
+  /**
+   * Writes a message to the server, but rate-limited to one message every 50ms.
+   * @param message The message to send to the server.
+   */
   public write(message: string): void {
-    this.log.debug('Write data:', message);
-    this.client.write(message);
+    this.messageQueue.push(message);
+    if (!this.isProcessingQueue) {
+      this.processQueue();
+    }
   }
 
   public close(): void {
     this.client.destroy();
+  }
+
+  /**
+   * Processes the message queue, sending one message every 50ms.
+   */
+  private processQueue(): void {
+    this.isProcessingQueue = true;
+
+    const sendNextMessage = () => {
+      if (this.messageQueue.length > 0) {
+        const nextMessage = this.messageQueue.shift();
+        if (nextMessage) {
+          this.log.debug('Write data:', nextMessage);
+          this.client.write(nextMessage);
+        }
+        setTimeout(sendNextMessage, TWILINE_MESSAGE_PROCESSING_TIME); // Wait 50ms before sending the next message
+      } else {
+        this.isProcessingQueue = false; // Stop processing if queue is empty
+      }
+    };
+
+    sendNextMessage();
   }
 }
 
